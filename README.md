@@ -147,6 +147,13 @@ The server is fully containerized and configured for deployment on [Render](http
 - **Dynamic Port**: Render dynamically assigns a port via the `PORT` environment variable. `ChatServer` reads `System.getenv("PORT")` and binds accordingly.
 - **HTTP Health Probe Compatibility**: Render Web Services issue HTTP health checks (`GET / HTTP/1.1`) to verify service health. `ClientHandler` detects HTTP GET request headers, responds with `HTTP/1.1 200 OK`, and closes the socket probe cleanly without adding probe connections to the active chat registry.
 
+### 🌐 Cloud Deployment Architecture Note (Layer 4 TCP vs Layer 7 HTTP Proxy)
+- **Render Web Services**: Render's free Web Services place a **Layer 7 HTTP Reverse Proxy** (Cloudflare/Envoy) in front of container ports. The deployment on `https://realtime-chat-server-c1x6.onrender.com` passes health checks with `200 OK`.
+- **Raw TCP Socket Clients**: Standard TCP sockets (`java.net.Socket`) operate at **Layer 4 (Transport Layer)**. When connecting over HTTP reverse proxies (port 80/443), Layer 7 proxies expect HTTP request headers before forwarding streams.
+- **Production TCP Hosting Options**:
+  - **Local/LAN Execution**: Run `java -jar target/chat-server.jar` locally for raw TCP multi-client socket communication.
+  - **Cloud TCP Providers**: For cloud hosting of un-encapsulated raw TCP sockets, use cloud services supporting direct TCP port mapping (such as Render Private Services, Railway TCP Proxy, AWS EC2, or DigitalOcean VPS).
+
 ### Steps to Push to GitHub & Deploy on Render
 
 1. **Initialize Git Repository**:
