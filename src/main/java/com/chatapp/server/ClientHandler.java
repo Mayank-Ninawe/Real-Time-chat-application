@@ -83,20 +83,29 @@ public class ClientHandler implements Runnable {
      * @return true if client successfully registered, false if HTTP probe or failed handshake
      */
     private boolean handleHandshake() throws IOException {
-        // Send initial prompt
+        // Check if incoming connection sent data immediately (HTTP GET/HEAD health probe)
+        // TCP chat clients wait for server prompt, so available() will be 0.
+        try {
+            Thread.sleep(50); // Small 50ms window for HTTP request headers to buffer
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        if (socket.getInputStream().available() > 0) {
+            String initialLine = reader.readLine();
+            if (initialLine != null && (initialLine.startsWith("GET ") || initialLine.startsWith("HEAD ") || initialLine.startsWith("POST "))) {
+                server.log("HTTP Health Check probe detected from " + socket.getRemoteSocketAddress());
+                writer.print("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK");
+                writer.flush();
+                return false;
+            }
+        }
+
+        // Send initial TCP Chat prompt to regular chat clients
         writer.println("ENTER_USERNAME");
 
         String line = reader.readLine();
         if (line == null) {
-            return false;
-        }
-
-        // Render Web Service HTTP Health Check Probe Detection
-        // If Render sends an HTTP health check request (e.g. "GET / HTTP/1.1"), respond with HTTP 200 OK
-        if (line.startsWith("GET ") || line.startsWith("HEAD ") || line.startsWith("POST ")) {
-            server.log("HTTP Health Check probe detected from " + socket.getRemoteSocketAddress());
-            writer.print("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK");
-            writer.flush();
             return false;
         }
 
