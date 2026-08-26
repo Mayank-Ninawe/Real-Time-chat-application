@@ -1,0 +1,12 @@
+# Render Blueprint Deployment Configuration
+# Web Service running Java TCP Socket Chat Server with HTTP health check probe support
+
+services:
+  - type: web
+    name: realtime-chat-server
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: Dockerfile
+    # Render assigns dynamic port via $PORT env variable automatically
+    healthCheckPath: /

@@ -1,0 +1,21 @@
+# Target build artifacts
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# IDE and Editor Files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
